@@ -1,29 +1,29 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class PlagiarismDetector {
 
     private static final int PRIME = 101; //hashing int
-    private static final int MIN_WORDS = 4; //minimum number of words to be recognized as plagiarism
+    private static final int MIN_WORDS = 8; //minimum number of words to be recognized as plagiarism
 
     public static void main(String[] args) {
         try {
-            String text1 = readFileAsString("C:\\Users\\agnie\\IdeaProjects\\PlagiarismDetector\\out\\production\\PlagiarismDetector\\dracula.txt");
-            String text2 = readFileAsString("C:\\Users\\agnie\\IdeaProjects\\PlagiarismDetector\\out\\production\\PlagiarismDetector\\frankenstein.txt");
+            String text1 = readFileAsString("frankenstein.txt");
+            String text2 = readFileAsString("dracula.txt");
+
 
             long startTime = System.currentTimeMillis();
-            List<String> plagiarisms = findPlagiarism(text1, text2, MIN_WORDS);
-            System.out.println("Plagiarized contents: " + plagiarisms);
-
+            Map<String, List<Integer>> plagiarisms = findPlagiarism(text1, text2, MIN_WORDS);
             long endTime = System.currentTimeMillis();
-            System.out.println("Execution time of finding plagiarism : " + (endTime - startTime) + " milliseconds");
+            System.out.printf("Execution time of finding plagiarism  %.2f minutes%n", (endTime - startTime) / 60000.0);
 
-            double plagiarismPercentage = calculatePlagiarismPercentage(plagiarisms, tokenize(text1).length);
-            System.out.println("Percentage of plagiarized text: " +  String.format("%.2f", plagiarismPercentage) + "%");
+            for (Map.Entry<String, List<Integer>> entry : plagiarisms.entrySet()) {
+                String pattern = entry.getKey();
+                List<Integer> lines = entry.getValue();
+                System.out.println("Pattern: \"" + pattern + "\" found " + lines.size() + " times at lines " + lines);
+            }
 
 
         } catch (IOException e) {
@@ -55,8 +55,9 @@ public class PlagiarismDetector {
         return str1.equals(str2);
     }
 
-    public static List<String> findPlagiarism(String text1, String text2, int words) {
-        List<String> plagiarisms = new ArrayList<>();
+
+    public static Map<String, List<Integer>> findPlagiarism(String text1, String text2, int words) {
+        Map<String, List<Integer>> plagiarisms = new HashMap<>();
 
         String[] words1 = tokenize(text1);
         String[] words2 = tokenize(text2);
@@ -73,18 +74,11 @@ public class PlagiarismDetector {
 
             for (int j = 0; j <= words2.length - words; j++) {
                 if (patternHash == hashesText2[j] && compareStrings(pattern, createWordGroup(words2, j, words))) {
-                    plagiarisms.add(pattern);
+                    plagiarisms.computeIfAbsent(pattern, k -> new ArrayList<>()).add(i / words + 1);
                 }
             }
         }
+
         return plagiarisms;
     }
-
-    private static double calculatePlagiarismPercentage(List<String> plagiarisms, int totalWordCount) {
-        int plagiarizedWordCount = plagiarisms.stream()
-                .mapToInt(plagiarism -> plagiarism.split(" ").length)
-                .sum();
-
-        return (double) plagiarizedWordCount / totalWordCount * 100;
-}
 }
