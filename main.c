@@ -20,7 +20,7 @@ char* readFileAsString(const char* filePath) {
     size_t contentSize = 0;
     size_t bytesRead;
     while ((bytesRead = fread(buffer, 1, sizeof(buffer), file)) > 0) {
-        char* newContent = realloc(content, contentSize + bytesRead + 1);
+        char* newContent = (char*)realloc(content, contentSize + bytesRead + 1);
         if (!newContent) {
             perror("Error reallocating memory");
             exit(EXIT_FAILURE);
@@ -29,7 +29,7 @@ char* readFileAsString(const char* filePath) {
         memcpy(content + contentSize, buffer, bytesRead);
         contentSize += bytesRead;
     }
-    content = realloc(content, contentSize + 1);
+    content = (char*)realloc(content, contentSize + 1);
     if (!content) {
         perror("Error reallocating memory");
         exit(EXIT_FAILURE);
