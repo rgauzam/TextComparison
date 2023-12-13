@@ -42,11 +42,12 @@ char* readFileAsString(const char* filePath) {
 // Function to tokenize a string into words
 char** tokenize(const char* str, int* count) {
     char* copy = strdup(str);
-    const char* delimiters = " \n\t\r.,;:!?'\"()[]{}*#_—-’”“™"; // signs in texts as "***" are not identified as a word
+    const char* delimiters = " \n\t\r.,;:!?'\"()[]{}*#_—-’”“™"; // signs in texts as "***" are not identified as word
     char* token = strtok(copy, delimiters);
     int capacity = 10;
     int size = 0;
     char** tokens = (char**)malloc(capacity * sizeof(char*));
+
     while (token != NULL) {
         if (size == capacity) {
             capacity *= 2;
@@ -92,14 +93,18 @@ double calculatePlagiarismPercentage(int plagiarismsCount, int totalWordCount) {
     return (double)plagiarismsCount / totalWordCount * 100;
 }
 
+
 void findPlagiarism(const char* text1, const char* text2, int words) {
     int count1, count2;
     char** words1 = tokenize(text1, &count1);
     char** words2 = tokenize(text2, &count2);
+
     int plagiarismsCount = 0, totalWordCount = count1;
     int* plagiarizedIndices = (int*)calloc(count1, sizeof(int));
     int* sentenceLengths = (int*)calloc(count1, sizeof(int)); // Array to track sentence lengths
+
     if (count1 < words || count2 < words) return;
+
     // Create hash table for all word groups in text2
     unsigned long* hashesText2 = (unsigned long*)malloc((count2 - words + 1) * sizeof(unsigned long));
     for (int i = 0; i <= count2 - words; ++i) {
@@ -107,10 +112,12 @@ void findPlagiarism(const char* text1, const char* text2, int words) {
         hashesText2[i] = rollingHash(group, strlen(group));
         free(group);
     }
+
     // Check each word group in text1
     for (int i = 0; i <= count1 - words; ++i) {
         char* group1 = createWordGroup(words1, i, words);
         unsigned long hash1 = rollingHash(group1, strlen(group1));
+
         for (int j = 0; j <= count2 - words; ++j) {
             if (hash1 == hashesText2[j]) {
                 char* group2 = createWordGroup(words2, j, words);
@@ -122,11 +129,14 @@ void findPlagiarism(const char* text1, const char* text2, int words) {
                             additionalWords++;
                             nextIndex++;
                         }
+
                         char* extendedGroup = createWordGroup(words1, i, words + additionalWords);
                         printf(" · %s\n", extendedGroup);
                         free(extendedGroup);
+
                         plagiarismsCount++;
                         sentenceLengths[words + additionalWords]++; // Increment count for the detected sentence length
+
                         for (int k = i; k < nextIndex; ++k) {
                             plagiarizedIndices[k] = 1;
                         }
@@ -146,14 +156,18 @@ void findPlagiarism(const char* text1, const char* text2, int words) {
             printf("\t%d-words sentences detected: %d times\n", i, sentenceLengths[i]);
         }
     }
+
     // Count plagiarized words
     int plagiarizedWords = 0;
     for (int i = 0; i < count1; ++i) {
         if (plagiarizedIndices[i]) plagiarizedWords++;
     }
+
     printf("\n\tTotal words: %d\n", totalWordCount);
     printf("\tPlagiarized words: %d\n", plagiarizedWords);
     printf("\tPlagiarism score: %.4f%%\n\n", calculatePlagiarismPercentage(plagiarizedWords, totalWordCount));
+
+
     free(sentenceLengths);
     free(hashesText2);
     free(plagiarizedIndices);
@@ -162,6 +176,8 @@ void findPlagiarism(const char* text1, const char* text2, int words) {
     free(words1);
     free(words2);
 }
+
+
 
 int main() {
     const char* filePath1 = "/Users/oliwiaw/Desktop/TXT_Files/dracula.txt";
@@ -172,10 +188,11 @@ int main() {
     clock_t startTime = clock();
     findPlagiarism(text1, text2, MIN_WORDS);
     clock_t endTime = clock();
+
     double executionTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC;
     printf("\tExecution time of finding plagiarism and counting statistics: %.4f seconds\n", executionTime);
+
     free(text1);
     free(text2);
-    printf("\n--------------------------------------------------------------------------------------- \n");
     return 0;
 }
