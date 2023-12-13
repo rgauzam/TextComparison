@@ -1,3 +1,7 @@
+//uncomment these for VisualStudio:
+//#define _CRT_SECURE_NO_WARNINGS
+//#pragma warning( disable : 4996) //security warnings, strcpy and such
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -131,7 +135,7 @@ void findPlagiarism(const char* text1, const char* text2, int words) {
                         }
 
                         char* extendedGroup = createWordGroup(words1, i, words + additionalWords);
-                        printf(" · %s\n", extendedGroup);
+                        printf(" ~ %s\n", extendedGroup);
                         free(extendedGroup);
 
                         plagiarismsCount++;
