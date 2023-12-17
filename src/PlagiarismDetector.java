@@ -64,21 +64,57 @@ public class PlagiarismDetector {
             hashTableText2.computeIfAbsent(hash, k -> new ArrayList<>()).add(i);
         }
 
+        ExecutorService executor = Executors.newFixedThreadPool(4);
         int totalWordCount = words1.length;
         int partSize = totalWordCount / 4;
 
-        try (ExecutorService executor = Executors.newFixedThreadPool(4)) {
-            for (int i = 0; i < 4; i++) {
-                int start = i * partSize;
-                int end = Math.min(start + partSize, totalWordCount);
-                executor.execute(() -> processPart(words1, words2, hashTableText2, start, end, words, plagiarizedIndices, sentenceLengths, plagiarismsCount));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        for (int i = 0; i < 4; i++) {
+            int start = i * partSize;
+            int end = Math.min(start + partSize, totalWordCount);
+            executor.execute(() -> {
+                processPart(words1, words2, hashTableText2, start, end, words, plagiarizedIndices, sentenceLengths, plagiarismsCount);
+            });
+        }
+
+        executor.shutdown();
+        while (!executor.isTerminated()) {
         }
 
         printStatistics(sentenceLengths, totalWordCount, plagiarizedIndices);
     }
+
+//    public static void findPlagiarism(String text1, String text2, int words) {
+//        String[] words1 = tokenize(text1);
+//        String[] words2 = tokenize(text2);
+//
+//        AtomicInteger plagiarismsCount = new AtomicInteger();
+//        ConcurrentHashMap<Integer, Boolean> plagiarizedIndices = new ConcurrentHashMap<>();
+//        ConcurrentHashMap<Integer, AtomicInteger> sentenceLengths = new ConcurrentHashMap<>();
+//
+//        ConcurrentHashMap<Integer, List<Integer>> hashTableText2 = new ConcurrentHashMap<>();
+//        for (int i = 0; i <= words2.length - words; i++) {
+//            String group = createWordGroup(words2, i, words);
+//            int hash = rollingHash(group);
+//            hashTableText2.computeIfAbsent(hash, k -> new ArrayList<>()).add(i);
+//        }
+//
+//        int totalWordCount = words1.length;
+//        int partSize = totalWordCount / 4;
+//
+//        ExecutorService executor = Executors.newFixedThreadPool(4);
+//
+//        try (ExecutorService executor = Executors.newFixedThreadPool(4)) {
+//            for (int i = 0; i < 4; i++) {
+//                int start = i * partSize;
+//                int end = Math.min(start + partSize, totalWordCount);
+//                executor.execute(() -> processPart(words1, words2, hashTableText2, start, end, words, plagiarizedIndices, sentenceLengths, plagiarismsCount));
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//
+//        printStatistics(sentenceLengths, totalWordCount, plagiarizedIndices);
+//    }
 
     private static void processPart(String[] words1, String[] words2, ConcurrentHashMap<Integer, List<Integer>> hashTableText2,
                                     int start, int end, int words, ConcurrentHashMap<Integer, Boolean> plagiarizedIndices,
