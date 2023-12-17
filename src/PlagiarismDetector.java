@@ -17,8 +17,8 @@ public class PlagiarismDetector {
 
     public static void main(String[] args) {
         try {
-            String text2 = readFileAsString("frankenstein.txt");
             String text1 = readFileAsString("dracula.txt");
+            String text2 = readFileAsString("frankenstein.txt");
 
             long startTime = System.currentTimeMillis();
             findPlagiarism(text1, text2, MIN_WORDS);
