@@ -11,9 +11,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class PlagiarismDetector {
 
-    private static final int PRIME = 101; //hashing int
+    private static final int PRIME = 101;
     private static final int BASE = 256;
-    private static final int MIN_WORDS = 4; //minimum number of words to be recognized as plagiarism
+    private static final int MIN_WORDS = 4;
 
     public static void main(String[] args) {
         try {
