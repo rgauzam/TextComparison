@@ -17,8 +17,8 @@ public class PlagiarismDetector {
 
     public static void main(String[] args) {
         try {
-            String text1 = readFileAsString("frankenstein.txt");
-            String text2 = readFileAsString("dracula.txt");
+            String text2 = readFileAsString("frankenstein.txt");
+            String text1 = readFileAsString("dracula.txt");
 
             long startTime = System.currentTimeMillis();
             findPlagiarism(text1, text2, MIN_WORDS);
@@ -33,8 +33,12 @@ public class PlagiarismDetector {
         return new String(Files.readAllBytes(Paths.get(filePath)));
     }
 
-    private static String[] tokenize(String str) {
-        return str.replaceAll("[^a-zA-Z ]", "").toLowerCase().split("\\s+");
+    public static String[] tokenize(String str) {
+        String delimiters = "[ \\n\\t\\r.,;:!?'\"()\\[\\]{}*#_—\\-’”“™]+";
+        String[] tokens = str.split(delimiters);
+        List<String> filteredTokens = new ArrayList<>(Arrays.asList(tokens));
+        filteredTokens.removeIf(String::isEmpty);
+        return filteredTokens.toArray(new String[0]);
     }
 
     private static int rollingHash(String text) {
@@ -64,21 +68,30 @@ public class PlagiarismDetector {
             hashTableText2.computeIfAbsent(hash, k -> new ArrayList<>()).add(i);
         }
 
-        ExecutorService executor = Executors.newFixedThreadPool(4);
+        //    ExecutorService executor = Executors.newFixedThreadPool(4);
         int totalWordCount = words1.length;
         int partSize = totalWordCount / 4;
 
-        for (int i = 0; i < 4; i++) {
-            int start = i * partSize;
-            int end = Math.min(start + partSize, totalWordCount);
-            executor.execute(() -> {
-                processPart(words1, words2, hashTableText2, start, end, words, plagiarizedIndices, sentenceLengths, plagiarismsCount);
-            });
+        try (ExecutorService executor = Executors.newFixedThreadPool(4)) {
+            for (int i = 0; i < 4; i++) {
+                int start = i * partSize;
+                int end = Math.min(start + partSize, totalWordCount);
+                executor.execute(() -> processPart(words1, words2, hashTableText2, start, end, words, plagiarizedIndices, sentenceLengths, plagiarismsCount));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+//        for (int i = 0; i < 4; i++) {
+//            int start = i * partSize;
+//            int end = Math.min(start + partSize, totalWordCount);
+//            executor.execute(() -> {
+//                processPart(words1, words2, hashTableText2, start, end, words, plagiarizedIndices, sentenceLengths, plagiarismsCount);
+//            });
+//        }
 
-        executor.shutdown();
-        while (!executor.isTerminated()) {
-        }
+//        executor.shutdown();
+//        while (!executor.isTerminated()) {
+//        }
 
         printStatistics(sentenceLengths, totalWordCount, plagiarizedIndices);
     }
